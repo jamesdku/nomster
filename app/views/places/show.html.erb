@@ -1,55 +1,42 @@
 <div class="booyah-box col-10 offset-1">
-  <h1><%= @place.name %></h1>
-  <i><%= @place.address %></i>
+  <h1 class="place-name"><%= @place.name %></h1>
+  <i class="place-address"><%= @place.address %></i>
   <br/><br/>
   <p><%= @place.description %></p>
+
+  <% if @place.latitude.present? && @place.longitude.present? %>
   
-<% if @place.latitude.present? && @place.longitude.present? %>
-  
-  <script>
+   
+    <script>
+      function initMap() {
+        var myLatLng = {lat: <%= @place.latitude %>, lng: <%= @place.longitude %>};
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 12,
+          center: myLatLng
+        });
+        var marker = new google.maps.Marker({
+          position: myLatLng,
+          map: map,
+          title: 'Hello World!'
+        });
+      }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBsaPUwNvbPfrccJ5ei11-rx7Zt6ok4ZBQ&callback=initMap">
+    </script>
 
-    function initMap() {
-      var myLatLng = {lat: <%= @place.latitude %>, lng: <%= @place.longitude %>};
+     <div id="map"></div>
+     <% end %>
 
-      var map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 12,
-        center: myLatLng
-      });
+<br />
 
-      var marker = new google.maps.Marker({
-        position: myLatLng,
-        map: map,
-        title: 'Hello World!'
-      });
-    }
-  </script>
-
-  <script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBCWNCyftKw0Rek9a8XAqSh_AhvOt7bBAc&callback=initMap">
-  </script>
-
-  <div id="map"></div>
-<% end %>
-
-<br />  
   <div class="float-right">
-    <% if current_user && current_user == @place.user %>
-      <%= link_to 'Edit', edit_place_path(@place), class: 'btn btn-primary' %>
-      <%= link_to 'Destroy', place_path(@place), method: :delete, data: {confirm: 'Are you sure you want to delete this?'}, class: 'btn btn-danger' %>
-    <% end %>
-  </div>
-</div>
-
-<div class="clear"></div>
-<%= simple_form_for @comment, url: place_comments_path(@place) do |f| %>
-  <%= f.input :message %>
-  <%= f.input :rating, as: :select, collection: Comment::RATINGS %>
-  <%= f.submit "Add a Comment", class: 'btn btn-primary' %>
-<% end %>
-
-<!-- Button trigger modal -->
-<button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal">
+    <button type="button" class="btn btn-primary custom-btn" data-toggle="modal" data-target="#myModalcomment">
   Add a comment
+</button>
+    <!-- Button trigger modal -->
+<button type="button" class="btn btn-primary custom-btn" data-toggle="modal" data-target="#myModal">
+  Upload a photo
 </button>
 
 <!-- Modal -->
@@ -60,40 +47,96 @@
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">×</span>
         </button>
+        <h4 class="modal-title" id="myModalLabel">Add a photo</h4>
+      </div>
+
+      <%= simple_form_for @photo, url: place_photos_path(@place) do |f| %>
+      <div class="modal-body">
+        
+        <%= f.input :picture %>
+        <%= f.input :caption %>
+        
+      </div>
+      <div class="modal-footer">
+        
+        <%= f.submit "Upload a photo", class: 'btn btn-primary' %>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+    <% if current_user && current_user == @place.user %>
+      <%= link_to 'Edit', edit_place_path(@place), class: 'btn btn-primary custom-btn' %>
+      <%= link_to 'Remove', place_path(@place), method: :delete, data: {confirm: 'Are you sure you want to delete this place?'},class: 'btn btn-danger' %>
+    <% end %>
+  </div>
+  <br/><br/>
+</div>
+
+
+
+<br />
+
+<div class="clear"></div>
+
+<!-- Modal -->
+<div class="modal fade" id="myModalcomment" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
         <h4 class="modal-title" id="myModalLabel">Add a comment</h4>
       </div>
-      <%= simple_form_for @comment, url: place_comments_path(@place) do |f| %>
+   <%= simple_form_for @comment, url: place_comments_path(@place) do |f| %>
         <div class="modal-body">
           <%= f.input :message %>
           <%= f.input :rating, as: :select, collection: Comment::RATINGS %>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
           <%= f.submit "Add a Comment", class: 'btn btn-primary' %>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          
         </div>
       <% end %>
     </div>
   </div>
 </div>
-<div class="col-10 offset-1">
-  <h1 class="float-left">Comments</h1>
-  <!-- Button trigger modal -->
-  <button type="button" class="btn btn-primary btn-lg float-right" data-toggle="modal" data-target="#myModal">
-    Add a comment
-  </button>
-</div>
-<div class="clear"></div>
 
+
+
+
+<div class="clear"></div>
+<div class="booyah-box col-10 offset-1">
+<h2 class="comments-place">Comments</h2>
 <div class="row">
-  <% @place.comments.each do |comment| %>
-    <div class="col-12 col-sm-6">
-      <blockquote>
-        <% if comment.humanized_rating.present? %>
-          <b><%= comment.humanized_rating %></b> -
-        <% end %>
+<% @place.comments.each do |comment| %>
+  <div class="col-12 col-sm-6">
+    <blockquote>
+      <% if comment.humanized_rating.present? %>
+      <b><%= comment.humanized_rating %></b>
+      <% end %>
         <%= comment.message %>
         <small><%= comment.user.email %></small>
       </blockquote>
     </div>
-  <% end %>
+    <% end %>
+  </div>
+</div>
+
+    <div class="booyah-box col-10 offset-1">
+      <div class="row">
+  <% @place.photos.each do |photo| %>
+  <div class="col-12 col-sm-6">
+  <blockquote>
+      <b class="place-photo"><%= image_tag photo.picture.to_s, class: 'index-image-size' %></b>
+      <br />
+      <b><%= photo.caption %></b> 
+      <small><%= photo.user.email %></small>
+    </blockquote>
+  </div>
+    <% end %>
+  </div>
 </div>
